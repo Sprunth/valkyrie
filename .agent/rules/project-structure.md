@@ -16,6 +16,7 @@ Unity plugins are located in folder `unity/Assets/Plugins`. The following plugin
 - **Ionic.Zip.Unity**: Library for handling ZIP files.
 - **LZ4 Compression**: Library for LZ4 compression.
 - **NativeFilePicker**: Native file picker for Android and iOS.
+- **OnnxRuntime**: Microsoft ONNX Runtime 1.20.1 (netstandard2.0 managed DLL + native `x86_64/onnxruntime.dll`, Windows x64 only so far) used by text-to-speech in `Scripts/Tts`.
 - **StandaloneFileBrowser**: Native file browser for desktop platforms (Windows, macOS, Linux).
 - **TextMeshPro**: Advanced text rendering for Unity.
 
