@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using Assets.Scripts;
 using Assets.Scripts.Content;
+using Assets.Scripts.Tts;
 using Assets.Scripts.UI;
 using Assets.Scripts.UI.Screens;
 using Ionic.Zip;
@@ -85,6 +86,8 @@ public class Game : MonoBehaviour
     public LogWindow logWindow;
     // Class for stage control UI
     public Audio audioControl;
+    // Text to speech for quest dialogs
+    public TtsNarrator tts;
     // Transparecny value for non selected component in the editor
     public float editorTransparency;
     // Quest started as test from editor
@@ -197,6 +200,7 @@ public class Game : MonoBehaviour
         config = new ConfigFile();
         GameObject go = new GameObject("audio");
         audioControl = go.AddComponent<Audio>();
+        tts = go.AddComponent<TtsNarrator>();
         updateList = new List<IUpdateListener>();
         stats = new StatsManager();
         stats.DownloadStats();

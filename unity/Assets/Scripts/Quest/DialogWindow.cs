@@ -59,6 +59,11 @@ public class DialogWindow {
         }
 
         DrawItem();
+
+        if (eventData.qEvent.audio.Length == 0)
+        {
+            game.tts.Speak(text);
+        }
     }
 
     public void CreateWindow()
@@ -285,6 +290,7 @@ public class DialogWindow {
     // Cancel cleans up
     public void onCancel()
     {
+        Game.Get().tts.Stop();
         Destroyer.Dialog();
         Game.Get().CurrentQuest.eManager.currentEvent = null;
         // There may be a waiting event
@@ -297,6 +303,7 @@ public class DialogWindow {
         if (!checkHeroes()) return;
 
         Game game = Game.Get();
+        game.tts.Stop();
         // Destroy this dialog to close
         Destroyer.Dialog();
 
