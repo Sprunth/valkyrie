@@ -47,6 +47,11 @@ namespace Assets.Scripts.Tts
             get { return !engineFailed && Directory.Exists(Path.Combine(modelDirectory, "onnx")); }
         }
 
+        public bool SupportsCurrentLanguage
+        {
+            get { return SpeechText.LanguageCode(Game.Get().currentLang) != null; }
+        }
+
         // "male" or "female", stored in the user config
         public string Narrator
         {

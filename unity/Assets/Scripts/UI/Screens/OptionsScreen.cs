@@ -356,12 +356,14 @@ namespace Assets.Scripts.UI.Screens
             ui.SetFontSize(UIScaler.GetMediumFont());
 
             bool female = game.tts.Narrator == "female";
+            bool supported = game.tts.SupportsCurrentLanguage;
+            Color color = supported ? Color.white : Color.grey;
             ui = new UIElement();
             ui.SetLocation(rightX, ROW2_Y + ROW_LABEL_H, RIGHT_W, ROW_BTN_H);
-            ui.SetText(female ? FEMALE : MALE);
+            ui.SetText(female ? FEMALE : MALE, color);
             ui.SetFontSize(UIScaler.GetMediumFont());
-            ui.SetButton(delegate { game.tts.Narrator = female ? "male" : "female"; new OptionsScreen(); game.tts.Preview(); });
-            new UIElementBorder(ui);
+            if (supported) ui.SetButton(delegate { game.tts.Narrator = female ? "male" : "female"; new OptionsScreen(); game.tts.Preview(); });
+            new UIElementBorder(ui, color);
         }
 
         /// <summary>
