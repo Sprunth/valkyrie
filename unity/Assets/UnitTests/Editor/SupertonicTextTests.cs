@@ -50,9 +50,9 @@ namespace Valkyrie.UnitTests
         }
 
         [Test]
-        public void Preprocess_Ligature_IsDecomposed()
+        public void Preprocess_AccentedLetter_IsDecomposed()
         {
-            Assert.AreEqual("<en>find.</en>", SupertonicText.Preprocess("\uFB01nd", "en"));
+            Assert.AreEqual("<fr>cafe\u0301.</fr>", SupertonicText.Preprocess("caf\u00E9", "fr"));
         }
 
         [Test]
