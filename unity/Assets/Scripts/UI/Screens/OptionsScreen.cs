@@ -29,6 +29,9 @@ namespace Assets.Scripts.UI.Screens
         private readonly StringKey OptionON = new StringKey("val", "ON");
         private readonly StringKey OptionOff = new StringKey("val", "OFF");
         private readonly StringKey ADVANCED_OPTIONS = new StringKey("val", "ADVANCED_OPTIONS");
+        private readonly StringKey NARRATOR = new StringKey("val", "NARRATOR");
+        private readonly StringKey MALE = new StringKey("val", "male");
+        private readonly StringKey FEMALE = new StringKey("val", "female");
 
         // Grid constants
         private const float LEFT_X = 2f;
@@ -75,6 +78,8 @@ namespace Assets.Scripts.UI.Screens
             CreateFallbackLanguageElements();
 
             CreateAudioElements();
+
+            CreateNarratorElements();
 
             CreateResolutionAndFullScreenOptions();
 
@@ -336,6 +341,27 @@ namespace Assets.Scripts.UI.Screens
 
             effectSlide.value = eVolume;
             effectSlideRev.value = 1 - eVolume;
+        }
+
+        private void CreateNarratorElements()
+        {
+            if (!game.tts.Available) return;
+
+            // === Narrator row (ROW2 on right) ===
+            float rightX = UIScaler.GetHCenter() + RIGHT_X_OFFSET;
+            UIElement ui = new UIElement();
+            ui.SetLocation(rightX, ROW2_Y, RIGHT_W, ROW_LABEL_H);
+            ui.SetText(NARRATOR);
+            ui.SetFont(game.gameType.GetHeaderFont());
+            ui.SetFontSize(UIScaler.GetMediumFont());
+
+            bool female = game.tts.Narrator == "female";
+            ui = new UIElement();
+            ui.SetLocation(rightX, ROW2_Y + ROW_LABEL_H, RIGHT_W, ROW_BTN_H);
+            ui.SetText(female ? FEMALE : MALE);
+            ui.SetFontSize(UIScaler.GetMediumFont());
+            ui.SetButton(delegate { game.tts.Narrator = female ? "male" : "female"; new OptionsScreen(); });
+            new UIElementBorder(ui);
         }
 
         /// <summary>

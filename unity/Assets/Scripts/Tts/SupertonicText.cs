@@ -86,6 +86,11 @@ namespace Assets.Scripts.Tts
             return lang == "ko" || lang == "ja" ? 120 : 300;
         }
 
+        public static IEnumerable<string> Sentences(string paragraph)
+        {
+            return SentenceSplit.Split(paragraph).Where(s => s.Length > 0);
+        }
+
         public static List<string> ChunkText(string text, int maxLength)
         {
             var chunks = new List<string>();
@@ -96,10 +101,8 @@ namespace Assets.Scripts.Tts
             foreach (string paragraph in paragraphs)
             {
                 string currentChunk = "";
-                foreach (string sentence in SentenceSplit.Split(paragraph))
+                foreach (string sentence in Sentences(paragraph))
                 {
-                    if (sentence.Length == 0) continue;
-
                     if (currentChunk.Length + sentence.Length + 1 <= maxLength)
                     {
                         currentChunk = currentChunk.Length > 0 ? currentChunk + " " + sentence : sentence;

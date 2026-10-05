@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using ValkyrieTools;
@@ -10,23 +11,39 @@ namespace Assets.Scripts.Tts
     // Speaks quest text with Supertonic when its model is installed under <AppData>/tts/supertonic-3
     public class TtsNarrator : MonoBehaviour
     {
-        private const string VoiceName = "M1";
+        private const float StorytellerExaggeration = 1.3f;
+        private const float SentencePauseSeconds = 0.3f;
+        private static readonly Dictionary<string, string[]> NarratorVoices = new Dictionary<string, string[]>
+        {
+            { "male", new[] { "M5", "M1" } },
+            { "female", new[] { "F5", "F2" } }
+        };
 
         private readonly object engineLock = new object();
         private readonly object pendingLock = new object();
+        private readonly Queue<float[]> pendingSentences = new Queue<float[]>();
         private AudioSource audioSource;
         private string modelDirectory;
         private SupertonicTts engine;
-        private SupertonicVoice voice;
+        private Dictionary<string, SupertonicVoice> voices;
+        private SupertonicVoice averageVoice;
         private volatile bool engineFailed;
         private volatile int latestRequest;
-        private float[] pendingSamples;
-        private int pendingRequest;
-        private int sampleRate;
 
         public bool Available
         {
             get { return !engineFailed && Directory.Exists(Path.Combine(modelDirectory, "onnx")); }
+        }
+
+        // "male" or "female", stored in the user config
+        public string Narrator
+        {
+            get { return Game.Get().config.data.Get("UserConfig", "narrator") == "female" ? "female" : "male"; }
+            set
+            {
+                Game.Get().config.data.Add("UserConfig", "narrator", value);
+                Game.Get().config.Save();
+            }
         }
 
         void Start()
@@ -42,14 +59,19 @@ namespace Assets.Scripts.Tts
             string lang = SpeechText.LanguageCode(game.currentLang);
             if (!Available || lang == null) return;
 
-            string text = SpeechText.ToSpeakable(displayedText, GlyphWords(game.gameType.TypeName()));
+            var paragraphs = SpeechText.Paragraphs(displayedText, GlyphWords(game.gameType.TypeName()));
+            string[] voiceNames = NarratorVoices[Narrator];
             int request = latestRequest;
-            ThreadPool.QueueUserWorkItem(delegate { Synthesize(text, lang, request); });
+            ThreadPool.QueueUserWorkItem(delegate { Synthesize(paragraphs, voiceNames, lang, request); });
         }
 
         public void Stop()
         {
-            latestRequest++;
+            lock (pendingLock)
+            {
+                latestRequest++;
+                pendingSentences.Clear();
+            }
             if (audioSource != null) audioSource.Stop();
         }
 
@@ -62,24 +84,27 @@ namespace Assets.Scripts.Tts
             return SpeechText.GlyphWords(symbols, packs);
         }
 
-        private void Synthesize(string text, string lang, int request)
+        private void Synthesize(List<KeyValuePair<string, bool>> paragraphs, string[] voiceNames, string lang, int request)
         {
             try
             {
                 lock (engineLock)
                 {
-                    if (request != latestRequest) return;
-                    if (engine == null)
+                    if (engine == null) LoadEngine();
+                    SupertonicVoice storyteller = voices[voiceNames[0]].Exaggerate(averageVoice, StorytellerExaggeration);
+                    SupertonicVoice instructor = voices[voiceNames[1]];
+                    foreach (var paragraph in paragraphs)
                     {
-                        engine = new SupertonicTts(Path.Combine(modelDirectory, "onnx"));
-                        voice = SupertonicVoice.Load(Path.Combine(Path.Combine(modelDirectory, "voice_styles"), VoiceName + ".json"));
-                    }
-                    float[] samples = engine.Synthesize(text, lang, voice);
-                    lock (pendingLock)
-                    {
-                        pendingSamples = samples;
-                        pendingRequest = request;
-                        sampleRate = engine.SampleRate;
+                        foreach (string sentence in SupertonicText.Sentences(paragraph.Key))
+                        {
+                            if (request != latestRequest) return;
+                            float[] samples = engine.Synthesize(sentence, lang, paragraph.Value ? instructor : storyteller);
+                            Array.Resize(ref samples, samples.Length + (int)(SentencePauseSeconds * engine.SampleRate));
+                            lock (pendingLock)
+                            {
+                                if (request == latestRequest) pendingSentences.Enqueue(samples);
+                            }
+                        }
                     }
                 }
             }
@@ -90,18 +115,26 @@ namespace Assets.Scripts.Tts
             }
         }
 
+        private void LoadEngine()
+        {
+            engine = new SupertonicTts(Path.Combine(modelDirectory, "onnx"));
+            voices = Directory.GetFiles(Path.Combine(modelDirectory, "voice_styles"), "*.json")
+                .ToDictionary(Path.GetFileNameWithoutExtension, SupertonicVoice.Load);
+            averageVoice = SupertonicVoice.Average(voices.Values.ToList());
+        }
+
         void Update()
         {
+            if (audioSource.isPlaying) return;
             float[] samples;
             lock (pendingLock)
             {
-                samples = pendingSamples;
-                pendingSamples = null;
+                if (pendingSentences.Count == 0) return;
+                samples = pendingSentences.Dequeue();
             }
-            if (samples == null || samples.Length == 0 || pendingRequest != latestRequest) return;
 
             if (audioSource.clip != null) Destroy(audioSource.clip);
-            audioSource.clip = AudioClip.Create("tts", samples.Length, 1, sampleRate, false);
+            audioSource.clip = AudioClip.Create("tts", samples.Length, 1, engine.SampleRate, false);
             audioSource.clip.SetData(samples, 0);
             audioSource.volume = Game.Get().audioControl.effectVolume;
             audioSource.Play();

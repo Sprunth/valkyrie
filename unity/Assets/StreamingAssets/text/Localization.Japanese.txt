@@ -227,6 +227,7 @@ MONSTER_UNIQUE,ユニーク
 MOVES,歩数
 MPLACE,MPlace
 MUSIC,音楽
+NARRATOR,ナレーター
 NAME,名前
 NEW,新規
 NEW_X,{新規 {0}}

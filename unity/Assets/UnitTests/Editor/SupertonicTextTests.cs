@@ -110,5 +110,11 @@ namespace Valkyrie.UnitTests
                 new[] { "Dr. Smith arrived.", "He sat." },
                 SupertonicText.ChunkText("Dr. Smith arrived. He sat.", 15));
         }
+
+        [Test]
+        public void Sentences_SplitsOnSentenceEnds()
+        {
+            CollectionAssert.AreEqual(new[] { "Dr. Smith waits.", "Run!", "Why?" }, SupertonicText.Sentences("Dr. Smith waits. Run! Why?"));
+        }
     }
 }

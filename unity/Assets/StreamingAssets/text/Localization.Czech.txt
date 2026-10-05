@@ -161,6 +161,7 @@ MONSTER_UNIQUE,Unikátní
 MOVES,Pohyby
 MPLACE,Umístění
 MUSIC,Hudba
+NARRATOR,Vypravěč
 NAME,Jméno
 NEW,Nový
 NEW_X,{Nový {0}}

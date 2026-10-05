@@ -155,6 +155,7 @@ MONSTER_UNIQUE,Unique
 MOVES,Moves
 MPLACE,MPlace
 MUSIC,Music
+NARRATOR,Narrator
 NAME,Name
 NEW,New
 NEW_X,{New {0}}

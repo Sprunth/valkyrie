@@ -130,6 +130,7 @@ MONSTER_UNIQUE,Unique
 MOVES,Züge
 MPLACE,MPosition
 MUSIC,Musik
+NARRATOR,Erzähler
 NAME,Name
 NEW,Neu
 NEW_X,{Neu {0}}

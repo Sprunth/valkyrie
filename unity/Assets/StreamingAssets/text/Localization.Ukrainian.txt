@@ -127,6 +127,7 @@ MONSTER_NORMAL,Звичайний
 MONSTER_UNIQUE,Унікальний
 MOVES,Ходи
 MUSIC,Музика
+NARRATOR,Оповідач
 NAME,Назва
 NEW,Новий
 NEW_X,{Новий {0}}

@@ -62,5 +62,27 @@ namespace Valkyrie.UnitTests
         {
             Assert.IsNull(SpeechText.LanguageCode("Chinese"));
         }
+
+        [Test]
+        public void Paragraphs_StoryAndHighlightedInstruction_AreSeparated()
+        {
+            var result = SpeechText.Paragraphs("A bench stands here.\n\nPlace a <color=Cyan>Sight Token</color> as indicated.", new Dictionary<string, string>());
+
+            Assert.AreEqual(2, result.Count);
+            Assert.AreEqual(new KeyValuePair<string, bool>("A bench stands here.", false), result[0]);
+            Assert.AreEqual(new KeyValuePair<string, bool>("Place a Sight Token as indicated.", true), result[1]);
+        }
+
+        [Test]
+        public void Paragraphs_GameVerbWithoutHighlight_IsInstruction()
+        {
+            Assert.IsTrue(SpeechText.Paragraphs("Each investigator suffers 1 Horror.", new Dictionary<string, string>())[0].Value);
+        }
+
+        [Test]
+        public void Paragraphs_EmptyParagraphs_AreSkipped()
+        {
+            Assert.AreEqual(1, SpeechText.Paragraphs("Darkness.\n\n<b></b>\n\n", new Dictionary<string, string>()).Count);
+        }
     }
 }

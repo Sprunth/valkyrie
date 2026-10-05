@@ -137,6 +137,7 @@ MONSTER_UNIQUE,Único
 MOVES,Movimento
 MPLACE,Local de Monstro
 MUSIC,Música
+NARRATOR,Narrador
 NAME,Nome
 NEW,Novo
 NEW_X,Novo {0}

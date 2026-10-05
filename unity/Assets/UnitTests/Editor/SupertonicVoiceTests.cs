@@ -28,5 +28,28 @@ namespace Valkyrie.UnitTests
             CollectionAssert.AreEqual(new[] { 5f, 6f }, voice.Dp);
             CollectionAssert.AreEqual(new[] { 1, 2, 1 }, voice.DpShape);
         }
+
+        [Test]
+        public void Average_AveragesEachValue()
+        {
+            var other = SupertonicVoice.Parse(VoiceJson.Replace("[[[1, 2], [3, 4]]]", "[[[3, 4], [5, 6]]]"));
+
+            var average = SupertonicVoice.Average(new[] { SupertonicVoice.Parse(VoiceJson), other });
+
+            CollectionAssert.AreEqual(new[] { 2f, 3f, 4f, 5f }, average.Ttl);
+            CollectionAssert.AreEqual(new[] { 1, 2, 2 }, average.TtlShape);
+        }
+
+        [Test]
+        public void Exaggerate_ScalesDifferenceFromAverage()
+        {
+            var voice = SupertonicVoice.Parse(VoiceJson);
+            var average = SupertonicVoice.Parse(VoiceJson.Replace("[[[1, 2], [3, 4]]]", "[[[0, 0], [0, 0]]]"));
+
+            var result = voice.Exaggerate(average, 1.5f);
+
+            CollectionAssert.AreEqual(new[] { 1.5f, 3f, 4.5f, 6f }, result.Ttl);
+            CollectionAssert.AreEqual(new[] { 5f, 6f }, result.Dp);
+        }
     }
 }

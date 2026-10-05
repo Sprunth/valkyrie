@@ -130,6 +130,7 @@ MONSTER_UNIQUE,Niepowtarzalny
 MOVES,Ruchy
 MPLACE,Pozycja
 MUSIC,Muzyka
+NARRATOR,Narrator
 NAME,Imię
 NEW,Nowy
 NEW_X,{Nowy {0}}

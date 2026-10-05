@@ -31,6 +31,29 @@ namespace Assets.Scripts.Tts
             };
         }
 
+        public static SupertonicVoice Average(IList<SupertonicVoice> voices)
+        {
+            return new SupertonicVoice
+            {
+                Ttl = Enumerable.Range(0, voices[0].Ttl.Length).Select(i => voices.Average(v => v.Ttl[i])).ToArray(),
+                TtlShape = voices[0].TtlShape,
+                Dp = Enumerable.Range(0, voices[0].Dp.Length).Select(i => voices.Average(v => v.Dp[i])).ToArray(),
+                DpShape = voices[0].DpShape
+            };
+        }
+
+        // Scales this voice's difference from the average to make its character more pronounced
+        public SupertonicVoice Exaggerate(SupertonicVoice average, float amount)
+        {
+            return new SupertonicVoice
+            {
+                Ttl = Ttl.Select((value, i) => average.Ttl[i] + amount * (value - average.Ttl[i])).ToArray(),
+                TtlShape = TtlShape,
+                Dp = Dp.Select((value, i) => average.Dp[i] + amount * (value - average.Dp[i])).ToArray(),
+                DpShape = DpShape
+            };
+        }
+
         private static IEnumerable<float> Flatten(object node)
         {
             var list = node as List<object>;

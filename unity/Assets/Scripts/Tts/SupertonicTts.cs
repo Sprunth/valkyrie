@@ -10,7 +10,7 @@ namespace Assets.Scripts.Tts
     // Runs the four Supertonic ONNX models to turn text into mono float PCM samples
     public sealed class SupertonicTts : IDisposable
     {
-        public const int DefaultTotalSteps = 8;
+        public const int DefaultTotalSteps = 5;
         public const float DefaultSpeed = 1.05f;
         private const float ChunkSilenceSeconds = 0.3f;
 

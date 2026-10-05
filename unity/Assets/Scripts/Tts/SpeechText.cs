@@ -22,6 +22,23 @@ namespace Assets.Scripts.Tts
             { "Ukrainian", "uk" }
         };
 
+        private static readonly Regex InstructionStart = new Regex(
+            @"^(Place|Remove|Replace|Discard|Take|Gain|Suffer|Draw|Shuffle|Spawn|Move|Flip|Search|Set aside|Each investigator)\b");
+
+        // Splits text into paragraphs, flagging those that highlight game terms or start with a game action as instructions
+        public static List<KeyValuePair<string, bool>> Paragraphs(string displayedText, Dictionary<string, string> glyphToWord)
+        {
+            var paragraphs = new List<KeyValuePair<string, bool>>();
+            foreach (string paragraph in Regex.Split(displayedText, @"\n\s*\n"))
+            {
+                string speakable = ToSpeakable(paragraph, glyphToWord).Trim();
+                if (speakable.Length == 0) continue;
+                bool isInstruction = paragraph.Contains("<color") || InstructionStart.IsMatch(speakable);
+                paragraphs.Add(new KeyValuePair<string, bool>(speakable, isInstruction));
+            }
+            return paragraphs;
+        }
+
         public static string ToSpeakable(string displayedText, Dictionary<string, string> glyphToWord)
         {
             string text = Regex.Replace(displayedText, "</?[a-zA-Z][^>]*>", "");
