@@ -39,6 +39,12 @@ namespace Assets.Scripts.Tts
             return paragraphs;
         }
 
+        // Official voice-over clips are named after the scenario prologue or epilogue; other event audio is a sound effect
+        public static bool IsRecordedNarration(string audio)
+        {
+            return Regex.IsMatch(audio, "Prologue|Epilogue", RegexOptions.IgnoreCase);
+        }
+
         public static string ToSpeakable(string displayedText, Dictionary<string, string> glyphToWord)
         {
             string text = Regex.Replace(displayedText, "</?[a-zA-Z][^>]*>", "");

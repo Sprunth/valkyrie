@@ -81,7 +81,7 @@ namespace Assets.Scripts.Tts
             {
                 lang = speechLang;
                 voiceName = Narrator == "female" ? "F5" : "M5";
-                if (qEvent.audio.Length == 0) Enqueue(liveSentences, displayedText, glyphWords);
+                if (!SpeechText.IsRecordedNarration(qEvent.audio)) Enqueue(liveSentences, displayedText, glyphWords);
                 predictedSentences.Clear();
                 foreach (string text in predictedTexts)
                 {
@@ -133,8 +133,9 @@ namespace Assets.Scripts.Tts
                     if (next.GetType() != typeof(EventManager.Event) && !(next is EventManager.Token)) continue;
                     toVisit.Enqueue(next.qEvent);
 
+                    if (!next.qEvent.display || SpeechText.IsRecordedNarration(next.qEvent.audio)) continue;
                     string text = next.qEvent.text.Translate(true);
-                    if (!next.qEvent.display || next.qEvent.audio.Length > 0 || text.Length == 0 || text.Contains("{rnd:")) continue;
+                    if (text.Length == 0 || text.Contains("{rnd:")) continue;
                     texts.Add(EventManager.OutputSymbolReplace(EventManager.Event.ReplaceComponentText(text)).Replace("\\n", "\n"));
                 }
             }

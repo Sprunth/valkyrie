@@ -59,6 +59,21 @@ namespace Valkyrie.UnitTests
         }
 
         [Test]
+        public void IsRecordedNarration_PrologueAndEpilogueClips_AreNarration()
+        {
+            Assert.IsTrue(SpeechText.IsRecordedNarration("{import}/audio/ToaP_Prologue_EN.ogg"));
+            Assert.IsTrue(SpeechText.IsRecordedNarration("AudioToFGEpilogue"));
+        }
+
+        [Test]
+        public void IsRecordedNarration_SoundEffects_AreNotNarration()
+        {
+            Assert.IsFalse(SpeechText.IsRecordedNarration("AudioSelect"));
+            Assert.IsFalse(SpeechText.IsRecordedNarration("Sound_Effect_RocksFalling.ogg"));
+            Assert.IsFalse(SpeechText.IsRecordedNarration(""));
+        }
+
+        [Test]
         public void LanguageCode_KnownLanguage_ReturnsCode()
         {
             Assert.AreEqual("en", SpeechText.LanguageCode("English"));
