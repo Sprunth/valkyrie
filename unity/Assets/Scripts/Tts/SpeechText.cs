@@ -44,6 +44,7 @@ namespace Assets.Scripts.Tts
             string text = Regex.Replace(displayedText, "</?[a-zA-Z][^>]*>", "");
             foreach (var symbol in glyphToWord)
             {
+                text = Regex.Replace(text, @"(\b" + Regex.Escape(symbol.Value) + @"\w*)\s*" + Regex.Escape(symbol.Key), "$1", RegexOptions.IgnoreCase);
                 text = text.Replace(symbol.Key, symbol.Value);
             }
             return text;

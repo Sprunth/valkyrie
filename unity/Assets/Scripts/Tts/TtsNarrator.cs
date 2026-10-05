@@ -13,22 +13,26 @@ namespace Assets.Scripts.Tts
     {
         private const float StorytellerExaggeration = 1.3f;
         private const float SentencePauseSeconds = 0.3f;
-        private static readonly Dictionary<string, string[]> NarratorVoices = new Dictionary<string, string[]>
-        {
-            { "male", new[] { "M5", "M1" } },
-            { "female", new[] { "F5", "F2" } }
-        };
+        private const int PredictedDialogLimit = 8;
+        private const int CachedSentenceLimit = 50;
 
-        private readonly object engineLock = new object();
-        private readonly object pendingLock = new object();
-        private readonly Queue<float[]> pendingSentences = new Queue<float[]>();
+        private readonly object workLock = new object();
+        private readonly Queue<KeyValuePair<string, bool>> liveSentences = new Queue<KeyValuePair<string, bool>>();
+        private readonly Queue<KeyValuePair<string, bool>> predictedSentences = new Queue<KeyValuePair<string, bool>>();
+        private readonly Queue<float[]> pendingPlayback = new Queue<float[]>();
+        private readonly Dictionary<string, float[]> cache = new Dictionary<string, float[]>();
+        private readonly Queue<string> cacheOrder = new Queue<string>();
         private AudioSource audioSource;
+        private Thread worker;
+        private bool shuttingDown;
         private string modelDirectory;
         private SupertonicTts engine;
         private Dictionary<string, SupertonicVoice> voices;
         private SupertonicVoice averageVoice;
+        private string lang;
+        private string voiceName;
+        private int latestRequest;
         private volatile bool engineFailed;
-        private volatile int latestRequest;
 
         public bool Available
         {
@@ -43,6 +47,12 @@ namespace Assets.Scripts.Tts
             {
                 Game.Get().config.data.Add("UserConfig", "narrator", value);
                 Game.Get().config.Save();
+                lock (workLock)
+                {
+                    predictedSentences.Clear();
+                    cache.Clear();
+                    cacheOrder.Clear();
+                }
             }
         }
 
@@ -50,29 +60,78 @@ namespace Assets.Scripts.Tts
         {
             audioSource = gameObject.AddComponent<AudioSource>();
             modelDirectory = Path.Combine(Path.Combine(Game.AppData(), "tts"), "supertonic-3");
+            if (!Available) return;
+            worker = new Thread(Work) { IsBackground = true };
+            worker.Start();
         }
 
-        public void Speak(string displayedText)
+        public void Speak(string displayedText, QuestData.Event qEvent)
         {
             Stop();
             Game game = Game.Get();
-            string lang = SpeechText.LanguageCode(game.currentLang);
-            if (!Available || lang == null) return;
+            string speechLang = SpeechText.LanguageCode(game.currentLang);
+            if (!Available || speechLang == null) return;
 
-            var paragraphs = SpeechText.Paragraphs(displayedText, GlyphWords(game.gameType.TypeName()));
-            string[] voiceNames = NarratorVoices[Narrator];
-            int request = latestRequest;
-            ThreadPool.QueueUserWorkItem(delegate { Synthesize(paragraphs, voiceNames, lang, request); });
+            var glyphWords = GlyphWords(game.gameType.TypeName());
+            lock (workLock)
+            {
+                lang = speechLang;
+                voiceName = Narrator == "female" ? "F5" : "M5";
+                Enqueue(liveSentences, displayedText, glyphWords);
+                predictedSentences.Clear();
+                foreach (string text in PredictTexts(qEvent))
+                {
+                    Enqueue(predictedSentences, text, glyphWords);
+                }
+                Monitor.Pulse(workLock);
+            }
         }
 
         public void Stop()
         {
-            lock (pendingLock)
+            lock (workLock)
             {
                 latestRequest++;
-                pendingSentences.Clear();
+                liveSentences.Clear();
+                pendingPlayback.Clear();
             }
             if (audioSource != null) audioSource.Stop();
+        }
+
+        private static void Enqueue(Queue<KeyValuePair<string, bool>> queue, string displayedText, Dictionary<string, string> glyphWords)
+        {
+            foreach (var paragraph in SpeechText.Paragraphs(displayedText, glyphWords))
+            {
+                foreach (string sentence in SupertonicText.Sentences(paragraph.Key))
+                {
+                    queue.Enqueue(new KeyValuePair<string, bool>(sentence, paragraph.Value));
+                }
+            }
+        }
+
+        // Texts of upcoming dialogs reachable through buttons, hidden events and added tokens, read without changing game state
+        private static List<string> PredictTexts(QuestData.Event start)
+        {
+            var events = Game.Get().CurrentQuest.eManager.events;
+            var texts = new List<string>();
+            var visited = new HashSet<string> { start.sectionName };
+            var toVisit = new Queue<QuestData.Event>(new[] { start });
+            while (toVisit.Count > 0 && texts.Count < PredictedDialogLimit)
+            {
+                QuestData.Event qEvent = toVisit.Dequeue();
+                foreach (string name in qEvent.buttons.SelectMany(b => b.EventNames).Concat(qEvent.addComponents))
+                {
+                    EventManager.Event next;
+                    if (!visited.Add(name) || !events.TryGetValue(name, out next)) continue;
+                    if (next.GetType() != typeof(EventManager.Event) && !(next is EventManager.Token)) continue;
+                    toVisit.Enqueue(next.qEvent);
+
+                    string text = next.qEvent.text.Translate(true);
+                    if (!next.qEvent.display || next.qEvent.audio.Length > 0 || text.Length == 0 || text.Contains("{rnd:")) continue;
+                    texts.Add(EventManager.OutputSymbolReplace(EventManager.Event.ReplaceComponentText(text)).Replace("\\n", "\n"));
+                }
+            }
+            return texts;
         }
 
         private static Dictionary<string, string> GlyphWords(string gameType)
@@ -84,27 +143,35 @@ namespace Assets.Scripts.Tts
             return SpeechText.GlyphWords(symbols, packs);
         }
 
-        private void Synthesize(List<KeyValuePair<string, bool>> paragraphs, string[] voiceNames, string lang, int request)
+        // Background worker: live sentences first, then predicted ones while idle
+        private void Work()
         {
             try
             {
-                lock (engineLock)
+                LoadEngine();
+                while (true)
                 {
-                    if (engine == null) LoadEngine();
-                    SupertonicVoice storyteller = voices[voiceNames[0]].Exaggerate(averageVoice, StorytellerExaggeration);
-                    SupertonicVoice instructor = voices[voiceNames[1]];
-                    foreach (var paragraph in paragraphs)
+                    KeyValuePair<string, bool> sentence;
+                    bool live;
+                    int request;
+                    string sentenceLang;
+                    string sentenceVoice;
+                    lock (workLock)
                     {
-                        foreach (string sentence in SupertonicText.Sentences(paragraph.Key))
-                        {
-                            if (request != latestRequest) return;
-                            float[] samples = engine.Synthesize(sentence, lang, paragraph.Value ? instructor : storyteller);
-                            Array.Resize(ref samples, samples.Length + (int)(SentencePauseSeconds * engine.SampleRate));
-                            lock (pendingLock)
-                            {
-                                if (request == latestRequest) pendingSentences.Enqueue(samples);
-                            }
-                        }
+                        while (!shuttingDown && liveSentences.Count == 0 && predictedSentences.Count == 0) Monitor.Wait(workLock);
+                        if (shuttingDown) return;
+                        live = liveSentences.Count > 0;
+                        sentence = live ? liveSentences.Dequeue() : predictedSentences.Dequeue();
+                        request = latestRequest;
+                        sentenceLang = lang;
+                        sentenceVoice = voiceName;
+                    }
+
+                    float[] samples = Synthesize(sentence.Key, sentence.Value, sentenceLang, sentenceVoice);
+                    if (!live) continue;
+                    lock (workLock)
+                    {
+                        if (request == latestRequest) pendingPlayback.Enqueue(samples);
                     }
                 }
             }
@@ -121,16 +188,38 @@ namespace Assets.Scripts.Tts
             voices = Directory.GetFiles(Path.Combine(modelDirectory, "voice_styles"), "*.json")
                 .ToDictionary(Path.GetFileNameWithoutExtension, SupertonicVoice.Load);
             averageVoice = SupertonicVoice.Average(voices.Values.ToList());
+            engine.Synthesize("Ready.", "en", averageVoice);
+        }
+
+        private float[] Synthesize(string sentence, bool isInstruction, string sentenceLang, string sentenceVoice)
+        {
+            string key = sentenceVoice + isInstruction + sentenceLang + sentence;
+            float[] samples;
+            lock (workLock)
+            {
+                if (cache.TryGetValue(key, out samples)) return samples;
+            }
+
+            SupertonicVoice voice = isInstruction ? voices[sentenceVoice] : voices[sentenceVoice].Exaggerate(averageVoice, StorytellerExaggeration);
+            samples = engine.Synthesize(sentence, sentenceLang, voice);
+            Array.Resize(ref samples, samples.Length + (int)(SentencePauseSeconds * engine.SampleRate));
+            lock (workLock)
+            {
+                cache[key] = samples;
+                cacheOrder.Enqueue(key);
+                if (cacheOrder.Count > CachedSentenceLimit) cache.Remove(cacheOrder.Dequeue());
+            }
+            return samples;
         }
 
         void Update()
         {
             if (audioSource.isPlaying) return;
             float[] samples;
-            lock (pendingLock)
+            lock (workLock)
             {
-                if (pendingSentences.Count == 0) return;
-                samples = pendingSentences.Dequeue();
+                if (pendingPlayback.Count == 0) return;
+                samples = pendingPlayback.Dequeue();
             }
 
             if (audioSource.clip != null) Destroy(audioSource.clip);
@@ -142,10 +231,14 @@ namespace Assets.Scripts.Tts
 
         void OnDestroy()
         {
-            lock (engineLock)
+            lock (workLock)
             {
-                if (engine != null) engine.Dispose();
+                shuttingDown = true;
+                Monitor.Pulse(workLock);
             }
+            if (worker != null) worker.Join();
+            if (engine != null) engine.Dispose();
+            if (audioSource != null && audioSource.clip != null) Destroy(audioSource.clip);
         }
     }
 }

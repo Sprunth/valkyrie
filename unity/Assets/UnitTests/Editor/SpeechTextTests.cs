@@ -30,6 +30,14 @@ namespace Valkyrie.UnitTests
         }
 
         [Test]
+        public void ToSpeakable_GlyphAfterItsWord_IsDropped()
+        {
+            var glyphToWord = new Dictionary<string, string> { { "X", "clue" } };
+
+            Assert.AreEqual("Gain 2 Clues.", SpeechText.ToSpeakable("Gain 2 Clues X.", glyphToWord));
+        }
+
+        [Test]
         public void GlyphWords_SymbolTags_BecomeWords()
         {
             var symbols = new Dictionary<string, string> { { "{will}", "\uE001" }, { "{clue}", "\uE002" } };
