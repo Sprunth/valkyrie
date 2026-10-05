@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using Assets.Scripts.Content;
 using UnityEngine;
 using ValkyrieTools;
 
@@ -15,6 +16,8 @@ namespace Assets.Scripts.Tts
         private const float SentencePauseSeconds = 0.3f;
         private const int PredictedDialogLimit = 8;
         private const int CachedSentenceLimit = 50;
+        private const float NarrationFadeSeconds = 0.75f;
+        private static readonly StringKey PREVIEW = new StringKey("val", "NARRATOR_PREVIEW");
 
         private readonly object workLock = new object();
         private readonly Queue<KeyValuePair<string, bool>> liveSentences = new Queue<KeyValuePair<string, bool>>();
@@ -36,6 +39,8 @@ namespace Assets.Scripts.Tts
         private string voiceName;
         private int latestRequest;
         private volatile bool engineFailed;
+        private bool recordedNarrationPlaying;
+        private bool fadingNarration;
 
         public bool Available
         {
@@ -70,18 +75,31 @@ namespace Assets.Scripts.Tts
 
         public void Speak(string displayedText, QuestData.Event qEvent)
         {
+            if (!Available) return;
+            bool recordedNarration = SpeechText.IsRecordedNarration(qEvent.audio);
+            fadingNarration |= recordedNarrationPlaying && !recordedNarration;
+            recordedNarrationPlaying = recordedNarration;
+            Say(recordedNarration ? "" : displayedText, PredictTexts(qEvent));
+        }
+
+        public void Preview()
+        {
+            Say(PREVIEW.Translate(), new List<string>());
+        }
+
+        private void Say(string displayedText, List<string> predictedTexts)
+        {
             Stop();
             Game game = Game.Get();
             string speechLang = SpeechText.LanguageCode(game.currentLang);
             if (!Available || speechLang == null) return;
 
             var glyphWords = GlyphWords(game.gameType.TypeName());
-            List<string> predictedTexts = PredictTexts(qEvent);
             lock (workLock)
             {
                 lang = speechLang;
                 voiceName = Narrator == "female" ? "F5" : "M5";
-                if (!SpeechText.IsRecordedNarration(qEvent.audio)) Enqueue(liveSentences, displayedText, glyphWords);
+                Enqueue(liveSentences, displayedText, glyphWords);
                 predictedSentences.Clear();
                 foreach (string text in predictedTexts)
                 {
@@ -233,6 +251,7 @@ namespace Assets.Scripts.Tts
 
         void Update()
         {
+            if (fadingNarration) FadeNarration();
             if (audioSource.isPlaying) return;
             float[] samples;
             lock (workLock)
@@ -246,6 +265,17 @@ namespace Assets.Scripts.Tts
             audioSource.clip.SetData(samples, 0);
             audioSource.volume = Game.Get().audioControl.effectVolume;
             audioSource.Play();
+        }
+
+        // Fades out a prologue or epilogue voice-over still playing when the next dialog starts
+        private void FadeNarration()
+        {
+            AudioSource effects = Game.Get().audioControl.audioSourceEffect;
+            effects.volume -= Time.deltaTime / NarrationFadeSeconds;
+            if (effects.volume > 0) return;
+            effects.Stop();
+            effects.volume = 1;
+            fadingNarration = false;
         }
 
         void OnDestroy()

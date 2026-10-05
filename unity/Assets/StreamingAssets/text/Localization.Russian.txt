@@ -128,6 +128,7 @@ MONSTER_UNIQUE,Уникальный
 MOVES,Ход
 MUSIC,Музыка
 NARRATOR,Рассказчик
+NARRATOR_PREVIEW,Что-то шевелится во тьме за дверью.
 NAME,Имя
 NEW,Создать
 NEW_X,{Добавить {0}}

@@ -138,6 +138,7 @@ MOVES,Movimento
 MPLACE,Local de Monstro
 MUSIC,Música
 NARRATOR,Narrador
+NARRATOR_PREVIEW,Algo se agita na escuridão além da porta.
 NAME,Nome
 NEW,Novo
 NEW_X,Novo {0}

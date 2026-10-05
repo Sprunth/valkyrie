@@ -228,6 +228,7 @@ MOVES,歩数
 MPLACE,MPlace
 MUSIC,音楽
 NARRATOR,ナレーター
+NARRATOR_PREVIEW,扉の向こうの闇で、何かが蠢いている。
 NAME,名前
 NEW,新規
 NEW_X,{新規 {0}}

@@ -131,6 +131,7 @@ MOVES,Züge
 MPLACE,MPosition
 MUSIC,Musik
 NARRATOR,Erzähler
+NARRATOR_PREVIEW,Etwas regt sich in der Dunkelheit hinter der Tür.
 NAME,Name
 NEW,Neu
 NEW_X,{Neu {0}}

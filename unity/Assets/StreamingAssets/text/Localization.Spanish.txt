@@ -136,6 +136,7 @@ MOVES,Movimientos
 MPLACE,Posición
 MUSIC,Música
 NARRATOR,Narrador
+NARRATOR_PREVIEW,Algo se agita en la oscuridad tras la puerta.
 NAME,Nombre
 NEW,Nuevo
 NEW_X,{Nuevo {0}}

@@ -360,7 +360,7 @@ namespace Assets.Scripts.UI.Screens
             ui.SetLocation(rightX, ROW2_Y + ROW_LABEL_H, RIGHT_W, ROW_BTN_H);
             ui.SetText(female ? FEMALE : MALE);
             ui.SetFontSize(UIScaler.GetMediumFont());
-            ui.SetButton(delegate { game.tts.Narrator = female ? "male" : "female"; new OptionsScreen(); });
+            ui.SetButton(delegate { game.tts.Narrator = female ? "male" : "female"; new OptionsScreen(); game.tts.Preview(); });
             new UIElementBorder(ui);
         }
 
