@@ -24,6 +24,9 @@ namespace Assets.Scripts.Tts
         private readonly Queue<string> cacheOrder = new Queue<string>();
         private AudioSource audioSource;
         private Thread worker;
+        private KeyValuePair<string, bool> inFlightSentence;
+        private bool inFlightIsLive;
+        private CancellationTokenSource inFlightCancellation;
         private bool shuttingDown;
         private string modelDirectory;
         private SupertonicTts engine;
@@ -73,16 +76,19 @@ namespace Assets.Scripts.Tts
             if (!Available || speechLang == null) return;
 
             var glyphWords = GlyphWords(game.gameType.TypeName());
+            List<string> predictedTexts = PredictTexts(qEvent);
             lock (workLock)
             {
                 lang = speechLang;
                 voiceName = Narrator == "female" ? "F5" : "M5";
-                Enqueue(liveSentences, displayedText, glyphWords);
+                if (qEvent.audio.Length == 0) Enqueue(liveSentences, displayedText, glyphWords);
                 predictedSentences.Clear();
-                foreach (string text in PredictTexts(qEvent))
+                foreach (string text in predictedTexts)
                 {
                     Enqueue(predictedSentences, text, glyphWords);
                 }
+                bool stillNeeded = liveSentences.Contains(inFlightSentence) || predictedSentences.Contains(inFlightSentence);
+                if (inFlightCancellation != null && !stillNeeded) inFlightCancellation.Cancel();
                 Monitor.Pulse(workLock);
             }
         }
@@ -94,6 +100,7 @@ namespace Assets.Scripts.Tts
                 latestRequest++;
                 liveSentences.Clear();
                 pendingPlayback.Clear();
+                if (inFlightIsLive && inFlightCancellation != null) inFlightCancellation.Cancel();
             }
             if (audioSource != null) audioSource.Stop();
         }
@@ -165,13 +172,24 @@ namespace Assets.Scripts.Tts
                         request = latestRequest;
                         sentenceLang = lang;
                         sentenceVoice = voiceName;
+                        inFlightSentence = sentence;
+                        inFlightIsLive = live;
+                        inFlightCancellation = new CancellationTokenSource();
                     }
 
-                    float[] samples = Synthesize(sentence.Key, sentence.Value, sentenceLang, sentenceVoice);
-                    if (!live) continue;
+                    float[] samples = null;
+                    try
+                    {
+                        samples = Synthesize(sentence.Key, sentence.Value, sentenceLang, sentenceVoice, inFlightCancellation.Token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                    }
                     lock (workLock)
                     {
-                        if (request == latestRequest) pendingPlayback.Enqueue(samples);
+                        inFlightCancellation.Dispose();
+                        inFlightCancellation = null;
+                        if (samples != null && live && request == latestRequest) pendingPlayback.Enqueue(samples);
                     }
                 }
             }
@@ -188,10 +206,10 @@ namespace Assets.Scripts.Tts
             voices = Directory.GetFiles(Path.Combine(modelDirectory, "voice_styles"), "*.json")
                 .ToDictionary(Path.GetFileNameWithoutExtension, SupertonicVoice.Load);
             averageVoice = SupertonicVoice.Average(voices.Values.ToList());
-            engine.Synthesize("Ready.", "en", averageVoice);
+            engine.Synthesize("The house is silent, yet something waits in the darkness beyond the door.", "en", averageVoice);
         }
 
-        private float[] Synthesize(string sentence, bool isInstruction, string sentenceLang, string sentenceVoice)
+        private float[] Synthesize(string sentence, bool isInstruction, string sentenceLang, string sentenceVoice, CancellationToken cancellation)
         {
             string key = sentenceVoice + isInstruction + sentenceLang + sentence;
             float[] samples;
@@ -201,7 +219,7 @@ namespace Assets.Scripts.Tts
             }
 
             SupertonicVoice voice = isInstruction ? voices[sentenceVoice] : voices[sentenceVoice].Exaggerate(averageVoice, StorytellerExaggeration);
-            samples = engine.Synthesize(sentence, sentenceLang, voice);
+            samples = engine.Synthesize(sentence, sentenceLang, voice, cancellation: cancellation);
             Array.Resize(ref samples, samples.Length + (int)(SentencePauseSeconds * engine.SampleRate));
             lock (workLock)
             {
@@ -234,6 +252,7 @@ namespace Assets.Scripts.Tts
             lock (workLock)
             {
                 shuttingDown = true;
+                if (inFlightCancellation != null) inFlightCancellation.Cancel();
                 Monitor.Pulse(workLock);
             }
             if (worker != null) worker.Join();

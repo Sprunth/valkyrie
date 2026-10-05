@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 
@@ -48,7 +49,8 @@ namespace Assets.Scripts.Tts
             }
         }
 
-        public float[] Synthesize(string text, string lang, SupertonicVoice voice, int totalSteps = DefaultTotalSteps, float speed = DefaultSpeed)
+        public float[] Synthesize(string text, string lang, SupertonicVoice voice, int totalSteps = DefaultTotalSteps, float speed = DefaultSpeed,
+            CancellationToken cancellation = default(CancellationToken))
         {
             var samples = new List<float>();
             foreach (string chunk in SupertonicText.ChunkText(text, SupertonicText.MaxChunkLength(lang)))
@@ -57,12 +59,12 @@ namespace Assets.Scripts.Tts
                 {
                     samples.AddRange(new float[(int)(ChunkSilenceSeconds * SampleRate)]);
                 }
-                samples.AddRange(SynthesizeChunk(chunk, lang, voice, totalSteps, speed));
+                samples.AddRange(SynthesizeChunk(chunk, lang, voice, totalSteps, speed, cancellation));
             }
             return samples.ToArray();
         }
 
-        private float[] SynthesizeChunk(string text, string lang, SupertonicVoice voice, int totalSteps, float speed)
+        private float[] SynthesizeChunk(string text, string lang, SupertonicVoice voice, int totalSteps, float speed, CancellationToken cancellation)
         {
             long[] textIds = SupertonicText.ToTextIds(SupertonicText.Preprocess(text, lang), unicodeIndexer);
             var textIdsTensor = new DenseTensor<long>(textIds, new[] { 1, textIds.Length });
@@ -98,6 +100,7 @@ namespace Assets.Scripts.Tts
                 var textEmbedding = encoderOutputs.First(o => o.Name == "text_emb").AsTensor<float>();
                 for (int step = 0; step < totalSteps; step++)
                 {
+                    cancellation.ThrowIfCancellationRequested();
                     using (var stepOutputs = vectorEstimator.Run(new[]
                     {
                         NamedOnnxValue.CreateFromTensor("noisy_latent", new DenseTensor<float>(latent, latentShape)),
@@ -114,6 +117,7 @@ namespace Assets.Scripts.Tts
                 }
             }
 
+            cancellation.ThrowIfCancellationRequested();
             using (var vocoderOutputs = vocoder.Run(new[] { NamedOnnxValue.CreateFromTensor("latent", new DenseTensor<float>(latent, latentShape)) }))
             {
                 return vocoderOutputs.First(o => o.Name == "wav_tts").AsTensor<float>().Take(sampleCount).ToArray();

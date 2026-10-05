@@ -60,10 +60,7 @@ public class DialogWindow {
 
         DrawItem();
 
-        if (eventData.qEvent.audio.Length == 0)
-        {
-            game.tts.Speak(text, eventData.qEvent);
-        }
+        game.tts.Speak(text, eventData.qEvent);
     }
 
     public void CreateWindow()
