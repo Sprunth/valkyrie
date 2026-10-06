@@ -16,7 +16,7 @@
 
   !ifdef PRERELEASE
     ;Default installation folder
-    InstallDir "$PROGRAMFILES\Valkyrie-${VERSION}"
+    InstallDir "$PROGRAMFILES64\Valkyrie-${VERSION}"
 
     ;Get installation folder from registry if available
     InstallDirRegKey HKCU "Software\Valkyrie-${VERSION}" InstallLocation
@@ -24,7 +24,7 @@
 
   !ifndef PRERELEASE
     ;Default installation folder
-    InstallDir "$PROGRAMFILES\Valkyrie"
+    InstallDir "$PROGRAMFILES64\Valkyrie"
   
     ;Get installation folder from registry if available
     InstallDirRegKey HKCU "Software\Valkyrie" InstallLocation
