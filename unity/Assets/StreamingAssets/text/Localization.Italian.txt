@@ -102,6 +102,8 @@ MONSTER_UNIQUE,Unico
 MOVES,Movimenti
 MPLACE,Posizione
 MUSIC,Musica
+NARRATOR,Narratore
+NARRATOR_PREVIEW,Qualcosa si muove nell'oscurità oltre la porta.
 NAME,Nome
 NEW,Nuovo
 NEW_X,{Nuovo {0}}

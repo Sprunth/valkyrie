@@ -161,6 +161,8 @@ MONSTER_UNIQUE,Unikátní
 MOVES,Pohyby
 MPLACE,Umístění
 MUSIC,Hudba
+NARRATOR,Vypravěč
+NARRATOR_PREVIEW,Ve tmě za dveřmi se něco pohnulo.
 NAME,Jméno
 NEW,Nový
 NEW_X,{Nový {0}}

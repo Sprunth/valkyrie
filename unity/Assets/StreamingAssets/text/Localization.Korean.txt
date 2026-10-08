@@ -159,6 +159,8 @@ MONSTER_UNIQUE,고유
 MOVES,이동 횟수
 MPLACE,M장소
 MUSIC,음악
+NARRATOR,내레이터
+NARRATOR_PREVIEW,문 너머 어둠 속에서 무언가가 꿈틀거린다.
 NAME,이름
 NEW,새로운
 NEW_X,{새로운 {0}}

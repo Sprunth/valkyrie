@@ -16,6 +16,7 @@ Unity plugins are located in folder `unity/Assets/Plugins`. The following plugin
 - **Ionic.Zip.Unity**: Library for handling ZIP files.
 - **LZ4 Compression**: Library for LZ4 compression.
 - **NativeFilePicker**: Native file picker for Android and iOS.
+- **OnnxRuntime**: Microsoft ONNX Runtime 1.20.1 (netstandard2.0 managed DLL + native `x86_64/onnxruntime.dll`, Windows x64 only so far) used by text-to-speech in `Scripts/Tts`.
 - **StandaloneFileBrowser**: Native file browser for desktop platforms (Windows, macOS, Linux).
 - **TextMeshPro**: Advanced text rendering for Unity.
 
@@ -27,6 +28,9 @@ Unit tests are located in folder `unity\Assets\UnitTests`.
 
 ### Constants
 String constants are located in file `unity/Assets/Scripts/ValkyrieConstants.cs`.
+
+### Text to speech
+Text-to-speech code is located in folder `unity/Assets/Scripts/Tts`. The Supertonic model is not in the repository; `TtsNarrator` loads it from `<Game.AppData()>/tts/supertonic-3` (`onnx/`, `voice_styles/` with all ten preset voices) and stays silent when it is missing.
 
 ### UI components
 UI components are located in folder `unity/Assets/Scripts/UI`.

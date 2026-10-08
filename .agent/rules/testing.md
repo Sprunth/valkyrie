@@ -27,4 +27,5 @@ Before running Unit Tests ALWAYS ask if you should run them or the user will do 
 - Tests are located in `Assets/UnitTests/Editor`.
 - Tests generally verify parsing logic, content loading, and game rules (e.g., `QuestData`, `PuzzleCode`).
 - **Library Tests**: Code in the `libraries/` folder is part of the project. Tests for these libraries should be created in `Assets/UnitTests/Editor` and run via Unity, not as standalone projects.
+- Unity runs tests on Mono, whose `string.Normalize` differs from .NET Core (e.g. `FormKD` leaves ligatures like U+FB01 intact), so verify Unicode-dependent behaviour in Unity, not only in a standalone .NET harness.
 - Use `CultureInfo.InvariantCulture` for all locale-dependent parsing (e.g., `float.TryParse`) to ensure tests pass on all system locales.

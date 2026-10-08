@@ -350,7 +350,7 @@ if ($Config.BuildWindows -eq "true") {
     Build-Unity -PlatformName "Windows" `
         -OutputPath "$BuildDir\win\valkyrie.exe" `
         -LogFile "$BuildDir\Editor_valkyrie-windows.log" `
-        -BuildPlayerOption "-buildWindowsPlayer" `
+        -BuildPlayerOption "-buildWindows64Player" `
         -UnityProject $UnityProject `
         -UnityExe $UnityExe
 }

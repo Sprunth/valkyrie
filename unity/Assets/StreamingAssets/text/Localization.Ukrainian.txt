@@ -127,6 +127,8 @@ MONSTER_NORMAL,Звичайний
 MONSTER_UNIQUE,Унікальний
 MOVES,Ходи
 MUSIC,Музика
+NARRATOR,Оповідач
+NARRATOR_PREVIEW,Щось ворушиться в темряві за дверима.
 NAME,Назва
 NEW,Новий
 NEW_X,{Новий {0}}

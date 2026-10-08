@@ -136,7 +136,7 @@ echo [%TIME%] --- Starting Unity Builds ---
 
 if "%BUILD_WINDOWS%"=="true" (
     echo [%TIME%] Building for Windows...
-    Unity -batchmode -quit -projectPath "%~dp0unity" -buildWindowsPlayer ..\build\win\valkyrie.exe
+    Unity -batchmode -quit -projectPath "%~dp0unity" -buildWindows64Player ..\build\win\valkyrie.exe
     set BUILD_STATUS=!ERRORLEVEL!
     copy %LOCALAPPDATA%\Unity\Editor\Editor.log .\build\Editor_valkyrie-windows.log
     if !BUILD_STATUS! NEQ 0 (

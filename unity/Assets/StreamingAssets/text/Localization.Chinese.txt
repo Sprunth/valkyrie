@@ -130,6 +130,8 @@ MONSTER_UNIQUE,Unique
 MOVES,步驟數
 MPLACE,MPlace
 MUSIC,音樂
+NARRATOR,旁白
+NARRATOR_PREVIEW,門外的黑暗中，有東西在蠢動。
 NAME,名稱
 NEW,新建
 NEW_X,{新建 {0}}

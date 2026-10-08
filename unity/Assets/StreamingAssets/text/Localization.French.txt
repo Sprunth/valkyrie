@@ -131,6 +131,8 @@ MONSTER_UNIQUE,Unique
 MOVES,Actions
 MPLACE,Position
 MUSIC,Musique
+NARRATOR,Narrateur
+NARRATOR_PREVIEW,Quelque chose remue dans l'obscurité derrière la porte.
 NAME,Nom
 NEW,Nouveau
 NEW_X,{Nouveau {0}}

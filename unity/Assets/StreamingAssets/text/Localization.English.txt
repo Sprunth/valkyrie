@@ -155,6 +155,8 @@ MONSTER_UNIQUE,Unique
 MOVES,Moves
 MPLACE,MPlace
 MUSIC,Music
+NARRATOR,Narrator
+NARRATOR_PREVIEW,Something stirs in the darkness beyond the door.
 NAME,Name
 NEW,New
 NEW_X,{New {0}}

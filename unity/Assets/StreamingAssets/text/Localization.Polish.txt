@@ -130,6 +130,8 @@ MONSTER_UNIQUE,Niepowtarzalny
 MOVES,Ruchy
 MPLACE,Pozycja
 MUSIC,Muzyka
+NARRATOR,Narrator
+NARRATOR_PREVIEW,Coś porusza się w ciemności za drzwiami.
 NAME,Imię
 NEW,Nowy
 NEW_X,{Nowy {0}}
