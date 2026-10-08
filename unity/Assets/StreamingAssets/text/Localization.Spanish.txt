@@ -137,6 +137,11 @@ MPLACE,Posición
 MUSIC,Música
 NARRATOR,Narrador
 NARRATOR_PREVIEW,Algo se agita en la oscuridad tras la puerta.
+NARRATION,Narración
+NARRATION_DOWNLOAD,Descargar voz ({0} MB)
+NARRATION_DOWNLOADING,Descargando {0}%
+NARRATION_RETRYING,Servidor ocupado ({0} s)
+NARRATION_DOWNLOAD_RETRY,Reintentar descarga
 NAME,Nombre
 NEW,Nuevo
 NEW_X,{Nuevo {0}}

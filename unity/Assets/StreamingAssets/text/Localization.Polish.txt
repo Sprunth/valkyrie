@@ -132,6 +132,11 @@ MPLACE,Pozycja
 MUSIC,Muzyka
 NARRATOR,Narrator
 NARRATOR_PREVIEW,Coś porusza się w ciemności za drzwiami.
+NARRATION,Narracja
+NARRATION_DOWNLOAD,Pobierz głos ({0} MB)
+NARRATION_DOWNLOADING,Pobieranie {0}%
+NARRATION_RETRYING,Serwer zajęty ({0} s)
+NARRATION_DOWNLOAD_RETRY,Ponów pobieranie
 NAME,Imię
 NEW,Nowy
 NEW_X,{Nowy {0}}

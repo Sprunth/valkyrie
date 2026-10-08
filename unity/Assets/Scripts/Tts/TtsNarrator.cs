@@ -33,6 +33,7 @@ namespace Assets.Scripts.Tts
         private bool shuttingDown;
         private string modelDirectory;
         private SupertonicTts engine;
+        private int sampleRate;
         private Dictionary<string, SupertonicVoice> voices;
         private SupertonicVoice averageVoice;
         private string lang;
@@ -44,7 +45,27 @@ namespace Assets.Scripts.Tts
 
         public bool Available
         {
-            get { return !engineFailed && Directory.Exists(Path.Combine(modelDirectory, "onnx")); }
+            get { return !engineFailed && ModelInstalled && Enabled; }
+        }
+
+        public bool ModelInstalled
+        {
+            get { return Directory.Exists(Path.Combine(modelDirectory, "onnx")); }
+        }
+
+        public TtsModelDownload Download { get; private set; }
+
+        // Stored in the user config; turning narration off also unloads the model
+        public bool Enabled
+        {
+            get { return Game.Get().config.data.Get("UserConfig", "narration") != "off"; }
+            set
+            {
+                Game.Get().config.data.Add("UserConfig", "narration", value ? "on" : "off");
+                Game.Get().config.Save();
+                if (value) StartWorker();
+                else StopWorker();
+            }
         }
 
         public bool SupportsCurrentLanguage
@@ -73,9 +94,39 @@ namespace Assets.Scripts.Tts
         {
             audioSource = gameObject.AddComponent<AudioSource>();
             modelDirectory = Path.Combine(Path.Combine(Game.AppData(), "tts"), "supertonic-3");
-            if (!Available) return;
+            StartWorker();
+        }
+
+        // Downloads from the space-separated narrationModelSource URLs in the user config, or Hugging Face by default
+        public void DownloadModel()
+        {
+            if (ModelInstalled || (Download != null && Download.Running)) return;
+            string[] sources = TtsModelDownload.Sources(Game.Get().config.data.Get("UserConfig", "narrationModelSource"));
+            Download = new TtsModelDownload();
+            StartCoroutine(Download.Run(sources, modelDirectory + ".download", modelDirectory, StartWorker));
+        }
+
+        private void StartWorker()
+        {
+            if (worker != null || !Available) return;
+            shuttingDown = false;
             worker = new Thread(Work) { IsBackground = true };
             worker.Start();
+        }
+
+        private void StopWorker()
+        {
+            Stop();
+            lock (workLock)
+            {
+                shuttingDown = true;
+                if (inFlightCancellation != null) inFlightCancellation.Cancel();
+                Monitor.Pulse(workLock);
+            }
+            if (worker != null) worker.Join();
+            worker = null;
+            if (engine != null) engine.Dispose();
+            engine = null;
         }
 
         public void Speak(string displayedText, QuestData.Event qEvent)
@@ -227,7 +278,8 @@ namespace Assets.Scripts.Tts
         private void LoadEngine()
         {
             engine = new SupertonicTts(Path.Combine(modelDirectory, "onnx"));
-            voices = Directory.GetFiles(Path.Combine(modelDirectory, "voice_styles"), "*.json")
+            sampleRate = engine.SampleRate;
+            voices =Directory.GetFiles(Path.Combine(modelDirectory, "voice_styles"), "*.json")
                 .ToDictionary(Path.GetFileNameWithoutExtension, SupertonicVoice.Load);
             averageVoice = SupertonicVoice.Average(voices.Values.ToList());
             engine.Synthesize("The house is silent, yet something waits in the darkness beyond the door.", "en", averageVoice);
@@ -266,7 +318,7 @@ namespace Assets.Scripts.Tts
             }
 
             if (audioSource.clip != null) Destroy(audioSource.clip);
-            audioSource.clip = AudioClip.Create("tts", samples.Length, 1, engine.SampleRate, false);
+            audioSource.clip = AudioClip.Create("tts", samples.Length, 1, sampleRate, false);
             audioSource.clip.SetData(samples, 0);
             audioSource.volume = Game.Get().audioControl.effectVolume;
             audioSource.Play();
@@ -285,14 +337,7 @@ namespace Assets.Scripts.Tts
 
         void OnDestroy()
         {
-            lock (workLock)
-            {
-                shuttingDown = true;
-                if (inFlightCancellation != null) inFlightCancellation.Cancel();
-                Monitor.Pulse(workLock);
-            }
-            if (worker != null) worker.Join();
-            if (engine != null) engine.Dispose();
+            StopWorker();
             if (audioSource != null && audioSource.clip != null) Destroy(audioSource.clip);
         }
     }

@@ -129,6 +129,11 @@ MOVES,Ходи
 MUSIC,Музика
 NARRATOR,Оповідач
 NARRATOR_PREVIEW,Щось ворушиться в темряві за дверима.
+NARRATION,Озвучування
+NARRATION_DOWNLOAD,Завантажити голос ({0} МБ)
+NARRATION_DOWNLOADING,Завантаження {0}%
+NARRATION_RETRYING,Сервер зайнятий ({0} с)
+NARRATION_DOWNLOAD_RETRY,Повторити завантаження
 NAME,Назва
 NEW,Новий
 NEW_X,{Новий {0}}

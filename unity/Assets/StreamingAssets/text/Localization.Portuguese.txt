@@ -139,6 +139,11 @@ MPLACE,Local de Monstro
 MUSIC,Música
 NARRATOR,Narrador
 NARRATOR_PREVIEW,Algo se agita na escuridão além da porta.
+NARRATION,Narração
+NARRATION_DOWNLOAD,Baixar voz ({0} MB)
+NARRATION_DOWNLOADING,Baixando {0}%
+NARRATION_RETRYING,Servidor ocupado ({0} s)
+NARRATION_DOWNLOAD_RETRY,Tentar baixar novamente
 NAME,Nome
 NEW,Novo
 NEW_X,Novo {0}

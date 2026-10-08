@@ -129,6 +129,11 @@ MOVES,Ход
 MUSIC,Музыка
 NARRATOR,Рассказчик
 NARRATOR_PREVIEW,Что-то шевелится во тьме за дверью.
+NARRATION,Озвучивание
+NARRATION_DOWNLOAD,Скачать голос ({0} МБ)
+NARRATION_DOWNLOADING,Загрузка {0}%
+NARRATION_RETRYING,Сервер занят ({0} с)
+NARRATION_DOWNLOAD_RETRY,Повторить загрузку
 NAME,Имя
 NEW,Создать
 NEW_X,{Добавить {0}}

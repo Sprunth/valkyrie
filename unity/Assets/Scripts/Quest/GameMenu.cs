@@ -8,6 +8,9 @@ public class GameMenu {
     private static readonly StringKey SAVE = new StringKey("val","SAVE");
     private static readonly StringKey MAIN_MENU = new StringKey("val", "MAIN_MENU");
     private static readonly StringKey UNDO = new StringKey("val", "UNDO");
+    private static readonly StringKey NARRATION = new StringKey("val", "NARRATION");
+    private static readonly StringKey ON = new StringKey("val", "ON");
+    private static readonly StringKey OFF = new StringKey("val", "OFF");
 
     // Open the menu
     public static void Create()
@@ -30,9 +33,10 @@ public class GameMenu {
     public static void Draw()
     {
         Game game = Game.Get();
+        bool narration = game.tts.ModelInstalled;
         // Border around menu items
         UIElement ui = new UIElement();
-        ui.SetLocation((UIScaler.GetWidthUnits() - 12) / 2, 6, 12, 13);
+        ui.SetLocation((UIScaler.GetWidthUnits() - 12) / 2, 6, 12, narration ? 16 : 13);
         new UIElementBorder(ui);
 
         ui = new UIElement();
@@ -70,8 +74,20 @@ public class GameMenu {
         ui.SetFont(game.gameType.GetHeaderFont());
         new UIElementBorder(ui);
 
+        if (narration)
+        {
+            ui = new UIElement();
+            ui.SetLocation((UIScaler.GetWidthUnits() - 10) / 2, 16, 10, 2);
+            ui.SetText(NARRATION.Translate() + ": " + (game.tts.Enabled ? ON : OFF).Translate());
+            ui.SetBGColor(new Color(0.03f, 0.0f, 0f));
+            ui.SetFontSize(UIScaler.GetMediumFont());
+            ui.SetFont(game.gameType.GetHeaderFont());
+            ui.SetButton(delegate { game.tts.Enabled = !game.tts.Enabled; Destroyer.Dialog(); Draw(); });
+            new UIElementBorder(ui);
+        }
+
         ui = new UIElement();
-        ui.SetLocation((UIScaler.GetWidthUnits() - 10) / 2, 16, 10, 2);
+        ui.SetLocation((UIScaler.GetWidthUnits() - 10) / 2, narration ? 19 : 16, 10, 2);
         ui.SetText(CommonStringKeys.CANCEL);
         ui.SetBGColor(new Color(0.03f, 0.0f, 0f));
         ui.SetFontSize(UIScaler.GetMediumFont());

@@ -163,6 +163,11 @@ MPLACE,Umístění
 MUSIC,Hudba
 NARRATOR,Vypravěč
 NARRATOR_PREVIEW,Ve tmě za dveřmi se něco pohnulo.
+NARRATION,Vyprávění
+NARRATION_DOWNLOAD,Stáhnout hlas ({0} MB)
+NARRATION_DOWNLOADING,Stahování {0} %
+NARRATION_RETRYING,Server zaneprázdněn ({0} s)
+NARRATION_DOWNLOAD_RETRY,Zkusit stáhnout znovu
 NAME,Jméno
 NEW,Nový
 NEW_X,{Nový {0}}

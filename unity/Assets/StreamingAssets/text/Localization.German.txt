@@ -132,6 +132,11 @@ MPLACE,MPosition
 MUSIC,Musik
 NARRATOR,Erzähler
 NARRATOR_PREVIEW,Etwas regt sich in der Dunkelheit hinter der Tür.
+NARRATION,Erzählung
+NARRATION_DOWNLOAD,Stimme herunterladen ({0} MB)
+NARRATION_DOWNLOADING,Wird geladen {0} %
+NARRATION_RETRYING,Server ausgelastet ({0} s)
+NARRATION_DOWNLOAD_RETRY,Download wiederholen
 NAME,Name
 NEW,Neu
 NEW_X,{Neu {0}}

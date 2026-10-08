@@ -157,6 +157,11 @@ MPLACE,MPlace
 MUSIC,Music
 NARRATOR,Narrator
 NARRATOR_PREVIEW,Something stirs in the darkness beyond the door.
+NARRATION,Narration
+NARRATION_DOWNLOAD,Download voice ({0} MB)
+NARRATION_DOWNLOADING,Downloading {0}%
+NARRATION_RETRYING,Server busy ({0}s)
+NARRATION_DOWNLOAD_RETRY,Retry download
 NAME,Name
 NEW,New
 NEW_X,{New {0}}

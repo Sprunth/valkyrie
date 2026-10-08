@@ -30,7 +30,7 @@ Unit tests are located in folder `unity\Assets\UnitTests`.
 String constants are located in file `unity/Assets/Scripts/ValkyrieConstants.cs`.
 
 ### Text to speech
-Text-to-speech code is located in folder `unity/Assets/Scripts/Tts`. The Supertonic model is not in the repository; `TtsNarrator` loads it from `<Game.AppData()>/tts/supertonic-3` (`onnx/`, `voice_styles/` with all ten preset voices) and stays silent when it is missing.
+Text-to-speech code is located in folder `unity/Assets/Scripts/Tts`. The Supertonic model is not in the repository; `TtsNarrator` loads it from `<Game.AppData()>/tts/supertonic-3` (`onnx/`, `voice_styles/` with all ten preset voices) and stays silent when it is missing. Players download it from Options (`TtsModelDownload`); `config.ini` keys under `[UserConfig]`: `narration=on|off`, `narrationModelSource` (space-separated base URLs, Hugging Face by default).
 
 ### UI components
 UI components are located in folder `unity/Assets/Scripts/UI`.

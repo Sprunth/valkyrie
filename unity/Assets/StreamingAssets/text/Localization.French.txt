@@ -133,6 +133,11 @@ MPLACE,Position
 MUSIC,Musique
 NARRATOR,Narrateur
 NARRATOR_PREVIEW,Quelque chose remue dans l'obscurité derrière la porte.
+NARRATION,Narration
+NARRATION_DOWNLOAD,Télécharger la voix ({0} Mo)
+NARRATION_DOWNLOADING,Téléchargement {0} %
+NARRATION_RETRYING,Serveur occupé ({0} s)
+NARRATION_DOWNLOAD_RETRY,Réessayer le téléchargement
 NAME,Nom
 NEW,Nouveau
 NEW_X,{Nouveau {0}}

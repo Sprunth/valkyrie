@@ -6,6 +6,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using ValkyrieTools;
 using Assets.Scripts.Content;
+using Assets.Scripts.Tts;
 using Assets.Scripts.UI;
 
 namespace Assets.Scripts.UI.Screens
@@ -29,6 +30,11 @@ namespace Assets.Scripts.UI.Screens
         private readonly StringKey OptionON = new StringKey("val", "ON");
         private readonly StringKey OptionOff = new StringKey("val", "OFF");
         private readonly StringKey ADVANCED_OPTIONS = new StringKey("val", "ADVANCED_OPTIONS");
+        private readonly StringKey NARRATION = new StringKey("val", "NARRATION");
+        private static readonly StringKey NARRATION_DOWNLOAD = new StringKey("val", "NARRATION_DOWNLOAD");
+        private static readonly StringKey NARRATION_DOWNLOADING = new StringKey("val", "NARRATION_DOWNLOADING");
+        private static readonly StringKey NARRATION_RETRYING = new StringKey("val", "NARRATION_RETRYING");
+        private static readonly StringKey NARRATION_DOWNLOAD_RETRY = new StringKey("val", "NARRATION_DOWNLOAD_RETRY");
         private readonly StringKey NARRATOR = new StringKey("val", "NARRATOR");
         private readonly StringKey MALE = new StringKey("val", "male");
         private readonly StringKey FEMALE = new StringKey("val", "female");
@@ -345,25 +351,81 @@ namespace Assets.Scripts.UI.Screens
 
         private void CreateNarratorElements()
         {
-            if (!game.tts.Available) return;
-
-            // === Narrator row (ROW2 on right) ===
+            // === Narration row (ROW2 on right): download, then on/off ===
             float rightX = UIScaler.GetHCenter() + RIGHT_X_OFFSET;
             UIElement ui = new UIElement();
             ui.SetLocation(rightX, ROW2_Y, RIGHT_W, ROW_LABEL_H);
+            ui.SetText(NARRATION);
+            ui.SetFont(game.gameType.GetHeaderFont());
+            ui.SetFontSize(UIScaler.GetMediumFont());
+
+            ui = new UIElement();
+            ui.SetLocation(rightX, ROW2_Y + ROW_LABEL_H, RIGHT_W, ROW_BTN_H);
+            if (game.tts.ModelInstalled)
+            {
+                ui.SetText(game.tts.Enabled ? OptionON : OptionOff);
+                ui.SetButton(delegate { game.tts.Enabled = !game.tts.Enabled; new OptionsScreen(); });
+            }
+            else
+            {
+                ui.SetText(DownloadLabel(game.tts.Download));
+                ui.SetButton(delegate { game.tts.DownloadModel(); });
+                game.AddUpdateListener(new DownloadProgress(ui));
+            }
+            ui.SetFontSize(UIScaler.GetMediumFont());
+            new UIElementBorder(ui);
+
+            // === Narrator voice row (ROW3 on right) ===
+            ui = new UIElement();
+            ui.SetLocation(rightX, ROW3_Y, RIGHT_W, ROW_LABEL_H);
             ui.SetText(NARRATOR);
             ui.SetFont(game.gameType.GetHeaderFont());
             ui.SetFontSize(UIScaler.GetMediumFont());
 
             bool female = game.tts.Narrator == "female";
-            bool supported = game.tts.SupportsCurrentLanguage;
-            Color color = supported ? Color.white : Color.grey;
+            bool selectable = game.tts.Available && game.tts.SupportsCurrentLanguage;
+            Color color = selectable ? Color.white : Color.grey;
             ui = new UIElement();
-            ui.SetLocation(rightX, ROW2_Y + ROW_LABEL_H, RIGHT_W, ROW_BTN_H);
+            ui.SetLocation(rightX, ROW3_Y + ROW_LABEL_H, RIGHT_W, ROW_BTN_H);
             ui.SetText(female ? FEMALE : MALE, color);
             ui.SetFontSize(UIScaler.GetMediumFont());
-            if (supported) ui.SetButton(delegate { game.tts.Narrator = female ? "male" : "female"; new OptionsScreen(); game.tts.Preview(); });
+            if (selectable) ui.SetButton(delegate { game.tts.Narrator = female ? "male" : "female"; new OptionsScreen(); game.tts.Preview(); });
             new UIElementBorder(ui, color);
+        }
+
+        private static StringKey DownloadLabel(TtsModelDownload download)
+        {
+            if (download == null) return new StringKey(NARRATION_DOWNLOAD, "{0}", (TtsModelDownload.ApproxTotalBytes / 1000000).ToString());
+            if (download.Failed) return NARRATION_DOWNLOAD_RETRY;
+            if (download.RetryInSeconds > 0) return new StringKey(NARRATION_RETRYING, "{0}", download.RetryInSeconds.ToString());
+            return new StringKey(NARRATION_DOWNLOADING, "{0}", ((int)(download.Progress * 100)).ToString());
+        }
+
+        // Keeps the download button label current and reopens the screen once the model is installed
+        private class DownloadProgress : IUpdateListener
+        {
+            private readonly UIElement button;
+
+            public DownloadProgress(UIElement button)
+            {
+                this.button = button;
+            }
+
+            public void Click()
+            {
+            }
+
+            public bool Update()
+            {
+                if (button.ObjectDestroyed()) return false;
+                if (Game.Get().tts.ModelInstalled)
+                {
+                    new OptionsScreen();
+                    return false;
+                }
+                button.SetText(DownloadLabel(Game.Get().tts.Download));
+                return true;
+            }
         }
 
         /// <summary>
